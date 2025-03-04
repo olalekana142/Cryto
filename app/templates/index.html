@@ -33,6 +33,8 @@
         .card h3 {
             margin-top: 0;
             color: #333;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 10px;
         }
         button {
             background-color: #4CAF50;
@@ -42,40 +44,65 @@
             border-radius: 4px;
             cursor: pointer;
             font-size: 16px;
+            transition: background-color 0.3s;
         }
         button:hover {
             background-color: #45a049;
         }
         .market-data {
             margin-top: 10px;
+            font-size: 0.95em;
         }
         .coin-item {
-            padding: 10px;
-            margin: 5px 0;
-            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
             background-color: #f8f9fa;
+            border-left: 4px solid #ddd;
+            transition: transform 0.2s;
+        }
+        .coin-item:hover {
+            transform: translateX(5px);
         }
         .price-change {
             font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 3px;
         }
         .positive {
             color: #28a745;
+            background-color: #d4edda;
         }
         .negative {
             color: #dc3545;
+            background-color: #f8d7da;
         }
         .neutral {
             color: #6c757d;
+            background-color: #e9ecef;
         }
         .timestamp {
             color: #6c757d;
             font-size: 0.9em;
             margin-top: 20px;
+            text-align: center;
         }
         .loading {
             display: none;
             text-align: center;
             margin: 20px 0;
+            color: #666;
+        }
+        .loading:after {
+            content: '...';
+            animation: dots 1.5s steps(5, end) infinite;
+        }
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60% { content: '...'; }
+            80% { content: '....'; }
+            100% { content: '.....'; }
         }
         .sentiment {
             display: inline-block;
@@ -83,12 +110,23 @@
             border-radius: 3px;
             font-size: 0.9em;
             margin-left: 10px;
+            font-weight: bold;
+        }
+        .reason {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 5px;
         }
         .very-bullish { background-color: #28a745; color: white; }
         .bullish { background-color: #86cf8e; color: white; }
         .neutral { background-color: #6c757d; color: white; }
         .bearish { background-color: #dc3545; color: white; }
         .very-bearish { background-color: #b52e3c; color: white; }
+        .refresh-time {
+            font-size: 0.8em;
+            color: #999;
+            margin-top: 5px;
+        }
     </style>
 </head>
 <body>
@@ -97,7 +135,7 @@
         <p>Get real-time cryptocurrency trading recommendations and market insights</p>
         <button onclick="getCryptoAdvice()">Get Trading Recommendations</button>
         <div id="loading" class="loading">
-            Analyzing market data...
+            Analyzing market data
         </div>
         <div class="grid">
             <div class="card">
@@ -120,7 +158,9 @@
         function formatPrice(price) {
             return new Intl.NumberFormat('en-US', {
                 style: 'currency',
-                currency: 'USD'
+                currency: 'USD',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 6
             }).format(price);
         }
 
@@ -166,31 +206,37 @@
                                 ${formatPriceChange(coin.price_change_24h)}
                             </span>
                         </div>
-                        <div>Market Cap Rank: #${coin.market_cap_rank}</div>
+                        <div class="reason">${coin.reason}</div>
                     </div>
                 `).join('');
-                document.getElementById('marketInsights').innerHTML = marketInsightsHtml;
+                document.getElementById('marketInsights').innerHTML = marketInsightsHtml || 'Loading market data...';
 
                 // Display recommendations
                 const recommendationsHtml = data.recommendations.map(rec => `
                     <div class="coin-item">${rec}</div>
                 `).join('');
-                document.getElementById('recommendations').innerHTML = recommendationsHtml || 'No specific recommendations at this time';
+                document.getElementById('recommendations').innerHTML = recommendationsHtml || 'Generating recommendations...';
 
                 // Display trending coins
                 const trendingHtml = data.trending_coins.map(coin => `
                     <div class="coin-item">${coin}</div>
                 `).join('');
-                document.getElementById('trendingCoins').innerHTML = trendingHtml;
+                document.getElementById('trendingCoins').innerHTML = trendingHtml || 'Fetching trending coins...';
 
                 // Display timestamp
-                document.getElementById('timestamp').innerHTML = `Last updated: ${data.timestamp}`;
+                document.getElementById('timestamp').innerHTML = `
+                    Last updated: ${data.timestamp}
+                    <div class="refresh-time">Click the button above to refresh data</div>
+                `;
             })
             .catch(error => {
                 loading.style.display = 'none';
-                document.getElementById('marketInsights').innerHTML = 'Error: Unable to fetch crypto advice';
+                document.getElementById('marketInsights').innerHTML = 'Error: Unable to fetch crypto advice. Please try again.';
             });
         }
+
+        // Load data automatically when page loads
+        window.onload = getCryptoAdvice;
     </script>
 </body>
 </html>
